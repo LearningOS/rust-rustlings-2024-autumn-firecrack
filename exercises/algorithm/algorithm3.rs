@@ -3,10 +3,27 @@
 	This problem requires you to implement a sorting algorithm
 	you can use bubble sorting, insertion sorting, heap sorting, etc.
 */
-// I AM NOT DONE
 
-fn sort<T>(array: &mut [T]){
+fn sort<T:PartialOrd>(array: &mut [T]){
 	//TODO
+    if array.len() <= 1 {
+        return;
+    }
+
+    let sz = array.len();
+    for i in 0..(sz-1) { // 一共进行sz-1轮
+        let mut flag = false;
+
+        for j in 1..(sz-i) {// 后i个已经排序好
+            if (array[j - 1] > array[j]) {
+                array.swap(j-1, j);
+                flag = true;
+            }
+        }
+        if !flag {
+            break;
+        }
+    }
 }
 #[cfg(test)]
 mod tests {

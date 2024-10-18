@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -29,13 +28,13 @@ struct LinkedList<T> {
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T: Ord> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T: Ord> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -71,12 +70,66 @@ impl<T> LinkedList<T> {
     }
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
 	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+		if list_a.start.is_none() {
+            return list_b;
         }
+        if list_b.start.is_none() {
+            return list_a;
+        }
+        
+        //TODO
+		let mut list = LinkedList::<T>::new();
+        let mut cur_a = list_a.start; // option
+        let mut cur_b = list_b.start;
+
+        unsafe {
+            if (*cur_a.unwrap().as_ptr()).val <= (*cur_b.unwrap().as_ptr()).val {
+                list.start = cur_a;  // 将 list_a 的头节点作为新链表的头节点
+                list.end = cur_a;    
+                cur_a = (*cur_a.unwrap().as_ptr()).next.take(); // 移动 cur_a 到下一个节点
+            } else {
+                list.start = cur_b;  // 将 list_b 的头节点作为新链表的头节点
+                list.end = cur_b;    
+                cur_b = (*cur_b.unwrap().as_ptr()).next.take(); // 移动 cur_b 到下一个节点
+            }
+        }
+        while let (Some(mut a_ptr), Some(mut b_ptr)) = (cur_a, cur_b) {
+            let val_a = unsafe {&(*a_ptr.as_ptr()).val};
+            let val_b = unsafe {&(*b_ptr.as_ptr()).val};
+            
+            if val_a <= val_b {
+                unsafe {
+                    cur_a = (*a_ptr.as_ptr()).next.take(); // 更新 cur_a
+                    (*list.end.unwrap().as_ptr()).next = Some(a_ptr); // 将 a_ptr 移动到新链表
+                }
+                list.end = Some(a_ptr); // 更新链表末尾
+            } else {
+                unsafe {
+                    cur_b = (*b_ptr.as_ptr()).next.take(); // 更新 cur_b
+                    (*list.end.unwrap().as_ptr()).next = Some(b_ptr); // 将 b_ptr 移动到新链表
+                }
+                list.end = Some(b_ptr); // 更新链表末尾
+            }
+        
+        }
+
+        // 如果 cur_a 有剩余的节点，移动到新链表
+        if let Some(mut a_ptr) = cur_a {
+            unsafe {
+                (*list.end.unwrap().as_ptr()).next = Some(a_ptr); // 将剩余的 cur_a 节点接入新链表
+            }
+            list.end = list_a.end; // 更新 list.end
+        }
+
+        // 如果 cur_b 有剩余的节点，移动到新链表
+        if let Some(mut b_ptr) = cur_b {
+            unsafe {
+                (*list.end.unwrap().as_ptr()).next = Some(b_ptr); // 将剩余的 cur_b 节点接入新链表
+            }
+            list.end = list_b.end; // 更新 list.end
+        }
+
+        list
 	}
 }
 
@@ -98,6 +151,7 @@ where
 {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self.next {
+            // 通过递归的方式来实现对链表的遍历
             Some(node) => write!(f, "{}, {}", self.val, unsafe { node.as_ref() }),
             None => write!(f, "{}", self.val),
         }
